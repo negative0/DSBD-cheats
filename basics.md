@@ -1,8 +1,30 @@
-# SL-6 SPPU Cheatsheet
+# DSBDA SPPU Cheatsheet
 
+## First things first
 
-## Removing Values:
+- R seems to work like a procedural language, but it is interally a Object Oriented Language.
 
+- The assignment operator ``` <- ``` is just a fancy way for writing ``` = ```, both can be used interchangeably.
+
+- If the dataset contains very high number of values, consider to use a subset of these values for exploratory analysis and later take the entire set.
+
+- Never train any model on all values.
+
+- Always remove outliers before feeding to a statistical model.
+
+- Always remove null values before taking mean and medians.
+
+- Always read dataset description before doing anything on it.
+
+- Always summarize data before modifications.
+
+## Outlier/ missing values removal:
+
+### Omit all na values:
+- This deletes all rows with missing values:
+```
+df <- na.omit(df)
+```
 
 ### Removing negative values:
 
@@ -45,6 +67,12 @@ Or you can replace NaN values with some desired value by setting ``` mea[is.nan(
 
 - NA indicates "Not Available" and NaN indicates "Not a Number", both have to be handled seperately.
 
+### Remove other values
+
+```
+df$data_col[df$data_col == '?'] <- '0' 
+```
+
 
 ## Handle categorical data:
 
@@ -57,6 +85,127 @@ Here we are replacing yes and no labels in dataset for the cd column with 0 or 1
 ```
 # handling categorical data ...'no' is 0 and 'yes' is 1
 dataset$cd=factor(dataset$cd,levels = c('no','yes'),labels = c(0,1))
+```
+
+### Convert continuious data to categorical data
+
+```
+db.adult$hours_w[db.adult$hours_per_week < 40] <- " less_than_40"
+
+db.adult$hours_w[db.adult$hours_per_week >= 40 & 
+                 db.adult$hours_per_week <= 45] <- " between_40_and_45"
+
+db.adult$hours_w[db.adult$hours_per_week > 45 &
+                 db.adult$hours_per_week <= 60  ] <- " between_45_and_60"
+
+db.adult$hours_w[db.adult$hours_per_week > 60 &
+                 db.adult$hours_per_week <= 80  ] <- " between_60_and_80"
+
+db.adult$hours_w[db.adult$hours_per_week > 80] <- " more_than_80"
+
+```
+
+- You should prefer creating a new variable rather than replacing the current variable as follows:
+```
+db.adult$hours_w <- factor(db.adult$hours_w,
+                           ordered = FALSE,
+                           levels = c(" less_than_40", 
+                                      " between_40_and_45", 
+                                      " between_45_and_60",
+                                      " between_60_and_80",
+                                      " more_than_80"))
+
+```
+From the summary below we can see how many people belong to each category of the factor variable “hours_w”:
+```
+summary(db.adult$hours_w)
+```
+
+```
+      less_than_40  between_40_and_45  between_45_and_60 
+              6714              16606               5790 
+ between_60_and_80       more_than_80 
+               857                195 
+```
+
+As percentages we have the following:
+```
+for(i in 1:length(summary(db.adult$hours_w))){
+    
+   print(round(100*summary(db.adult$hours_w)[i]/sum(!is.na(db.adult$hours_w)), 2)) 
+}
+```
+- Output - 
+
+```
+ less_than_40 		22.26 
+ between_40_and_45  55.06 
+ between_45_and_60  19.2 
+ between_60_and_80  2.84 
+ more_than_80  		0.65 
+```
+
+With the help of the ```“levels()”``` function, we can see that the factor variable “native_country” has 41 levels. If we build a (logistic regression) predictive model with “native_country” as a covariate, we will end up with 41 additional degrees of freedom due to this categorical variable. This will complicate unnecessarily the analysis and might lead to overfitting. Hence, it is better to group the native countries into several global regions. This coarsening of the data also makes the interpretation of the results easier to comprehend.
+```
+levels(db.adult$native_country)
+```
+```
+ [1] " Cambodia"                   " Canada"                    
+ [3] " China"                      " Columbia"                  
+ [5] " Cuba"                       " Dominican-Republic"        
+ [7] " Ecuador"                    " El-Salvador"               
+ [9] " England"                    " France"                    
+[11] " Germany"                    " Greece"                    
+[13] " Guatemala"                  " Haiti"                     
+[15] " Holand-Netherlands"         " Honduras"                  
+[17] " Hong"                       " Hungary"                   
+[19] " India"                      " Iran"                      
+[21] " Ireland"                    " Italy"                     
+[23] " Jamaica"                    " Japan"                     
+[25] " Laos"                       " Mexico"                    
+[27] " Nicaragua"                  " Outlying-US(Guam-USVI-etc)"
+[29] " Peru"                       " Philippines"               
+[31] " Poland"                     " Portugal"                  
+[33] " Puerto-Rico"                " Scotland"                  
+[35] " South"                      " Taiwan"                    
+[37] " Thailand"                   " Trinadad&Tobago"           
+[39] " United-States"              " Vietnam"                   
+[41] " Yugoslavia"                
+```
+Below we create the new variable “native_region”, where we group the countries by global regions. We first define the regions:
+```
+Asia_East <- c(" Cambodia", " China", " Hong", " Laos", " Thailand",
+               " Japan", " Taiwan", " Vietnam")
+
+Asia_Central <- c(" India", " Iran")
+
+Central_America <- c(" Cuba", " Guatemala", " Jamaica", " Nicaragua", 
+                     " Puerto-Rico",  " Dominican-Republic", " El-Salvador", 
+                     " Haiti", " Honduras", " Mexico", " Trinadad&Tobago")
+
+South_America <- c(" Ecuador", " Peru", " Columbia")
+
+
+Europe_West <- c(" England", " Germany", " Holand-Netherlands", " Ireland", 
+                 " France", " Greece", " Italy", " Portugal", " Scotland")
+
+Europe_East <- c(" Poland", " Yugoslavia", " Hungary")
+```
+Then we modify the data frame by adding an additional column named “native_region”. We do this with the help of the “mutate” function form the “plyr” package:
+```
+db.adult <- mutate(db.adult, 
+       native_region = ifelse(native_country %in% Asia_East, " East-Asia",
+                ifelse(native_country %in% Asia_Central, " Central-Asia",
+                ifelse(native_country %in% Central_America, " Central-America",
+                ifelse(native_country %in% South_America, " South-America",
+                ifelse(native_country %in% Europe_West, " Europe-West",
+                ifelse(native_country %in% Europe_East, " Europe-East",
+                ifelse(native_country == " United-States", " United-States", 
+                       " Outlying-US" ))))))))
+```
+Next we transform the new variable into a factor:
+```
+db.adult$native_region <- factor(db.adult$native_region, ordered = FALSE)
 ```
 
 ## Split datasets in training and test sets
@@ -82,6 +231,8 @@ nrow(tariningset)
 ## Benchmarking: 
 
 - Using interquartile range (IQR) to calculate the benchmark
+- You can choose any other method like mean median also
+
 ```
 bhd<-528+1.5*IQR(dset$hd) #calculating benchmark of hd
 ```
@@ -138,6 +289,212 @@ R> dd[order(-dd[,4], dd[,1]), ]
 R> 
 ```
 rather than using the name of the column (and with() for easier/more direct access).
+
+## Setting new column names to the data frame
+
+```
+colnames(df) <- c('a', 'b', 'c')
+```
+- The the number of values in the c vector should be exactly equal to the number of columns in dataframe df.
+
+
+## Create dataset from independent vectors
+
+- This will create a new data frame with columns as Name, Sex and Age
+```
+Name <- c("John", "Tim", "Ami")
+Sex <- c("men", "men", "women")
+Age <- c(45, 53, 35)
+dt <- data.frame(Name, Sex, Age)
+```
+
+## Subset datasets
+
+- The subset function takes the dataframe to be processed, followed by condition on which the subset has to be done. 
+
+```
+dt2 <- subset(dt, Age>40&Sex==men)
+dt2
+```
+
+```
+# Other example
+(nrow(subset(db.adult, db.adult$capital_loss == 0))/nrow(db.adult))*100
+```
+
+- Here, we will get the new subset where Age is greater than 40 and sex is men
+
+Output - 
+
+```
+Name  Sex Age
+John  men  45
+Tim   men  53
+```
+
+## Reading files 
+
+### Reading CSV
+
+```
+data = read.csv("/path/to/file", header= TRUE)
+```
+
+#### Header Attribute
+- If the the file being read already contains a header, then specify the header as TRUE, so that it can automatically be read. header = TRUE by default. 
+- If FALSE is specified, it names the colums as V1, V2 ... Vn. You can later give custom names for these columns
+
+
+#### Specifing the NA strings:
+
+- In many situations, the NA values are represented using some other character for ex: (?)
+- We can replace these with NA while reading itself. 
+
+```
+db.adult <- read.table("adult.data",
+                       sep = ",", 
+                       header = FALSE, 
+                       na.strings = " ?")
+```
+- Don't forget the space before the ? in the above code, it should match the dataset attribute exactly. "?" is not same as " ?".
+
+### Export Dataset back to file:
+
+```
+write.csv(df, "file_name1.csv", row.names = FALSE)
+
+write.csv(df, "file_name2.csv", row.names = FALSE)
+```
+
+### Getting the number of rows and columns
+
+The following function will give the number of columns in the dataframe (df).
+```
+nrow(df)
+```
+
+
+## Merge datasets
+
+TODO:
+
+## Melting and casting data 
+
+TODO:
+
+### Looking at the top rows of the dataset
+
+```
+head(df, 10)
+# where 10 is the number of rows to display
+```
+### Checking the datatype of variables
+
+```
+str(df, vec.len = 2, strict.width = "no", width = 30)
+```
+- Output
+```
+'data.frame':	32561 obs. of  15 variables:
+ $ age           : int  39 50 38 53 28 ...
+ $ workclass     : Factor w/ 9 levels " ?"," Federal-gov",..: 8 7 5 5 5 ...
+ $ fnlwgt        : int  77516 83311 215646 234721 338409 ...
+ $ education     : Factor w/ 16 levels " 10th"," 11th",..: 10 10 12 2 10 ...
+ $ education-num : int  13 13 9 7 13 ...
+ $ marital       : Factor w/ 7 levels " Divorced"," Married-AF-spouse",..: 5 3 1 3 3 ...
+ $ occupation    : Factor w/ 15 levels " ?"," Adm-clerical",..: 2 5 7 7 11 ...
+ $ relationship  : Factor w/ 6 levels " Husband"," Not-in-family",..: 2 1 2 1 6 ...
+ $ race          : Factor w/ 5 levels " Amer-Indian-Eskimo",..: 5 5 5 3 3 ...
+ $ sex           : Factor w/ 2 levels " Female"," Male": 2 2 2 2 1 ...
+ $ capital-gain  : int  2174 0 0 0 0 ...
+ $ capital-loss  : int  0 0 0 0 0 ...
+ $ hours-per-week: int  40 13 40 40 40 ...
+```
+
+- As we can see from the output above, the variables “age”, “fnlwgt”, “education_num”, “capital_gain”, “capital_loss” and “hours_per_week” are of type integer, whereas all the other variables are factor variables with different number of levels. 
+
+#### Other method
+
+- You can check the data type of variable by using the is.data_type command: 
+
+Example
+- ``` is.factor ``` checks whether the variable is factor
+- ``` is.int ``` checks whether the variable is int
+
+
+### View Categorical variables
+
+- In order to see what the levels of each factor variable are, we write the function “levels_factors()”, which takes as an argument a data frame, identifies the factor variables and prints the levels of each categorical variable:
+
+```
+levels_factors <- function(mydata) {
+    col_names <- names(mydata)
+    for (i in 1:length(col_names)) {
+        if (is.factor(mydata[, col_names[i]])) {
+            print(levels(mydata[, col_names[i]]))
+        }
+    }
+}
+
+levels_factors(df)
+```
+
+
+
+
+
+## KNN model
+
+## Naive Bayes
+
+## Data Transformation
+
+## Transposing dataframe
+
+
+
+
+
+## Plotting graphs in R
+
+- The plotting functionality is provided by the ggplot2 library in R.
+- It can be installed and loaded using the following functions.
+- You can directly use ggplot function which also return a object which can later be modified, or other functions like plot, boxplot etc.
+- ```qplot``` is a shortcut if you're familier with ```plot()```. Ref: https://ggplot2.tidyverse.org/reference/qplot.html
+
+```
+
+```
+
+### Box Plots
+```
+ggplot(aes(x = factor(0), y = hours_per_week),
+       data = db.adult) + 
+  geom_boxplot()
+```
+
+### Histograms
+```
+ggplot(data = df, 
+       aes(x = df$capital_gain)) +
+  geom_histogram(binwidth = 5000,
+                 colour = "black",
+                 fill = "lightblue",
+                 alpha = 0.4) +
+  scale_y_continuous(breaks = seq(0, 4000, 100)) +
+  labs(x = "Capital gain", y = "Count") +
+  ggtitle("Histogram of Nonzero Capital Gain") 
+```
+
+### Dot Plots
+
+### Bar plots
+
+### Line Charts
+
+
+### Merging Plots
+
 
 
 
