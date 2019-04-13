@@ -26,7 +26,7 @@
 df <- na.omit(df)
 ```
 
-### Removing negative values:
+
 
 ```
 dataset$X=ifelse(is.na(dataset$X),ave(dataset$X,FUN=function(x) mean(x,na.rm=TRUE)),dataset$X)
@@ -40,14 +40,14 @@ Instead of eliminating null values, you can ignore it while calculating menas fo
 rowMeans(dframe, na.rm=TRUE) 
 ```
 
-OR
+### Removing negative values:
 
 ```
 dframe[dframe < 0] <- NA
 ```
 
 
-To consider only non-NaN values, you can subset for not NaN using !is.nan, see this example:
+To consider only non-NaN values, you can subset for not NaN using ```!is.nan```, see this example:
 
 ```
 mea <- c(2, 4, NaN, 6)
@@ -87,7 +87,7 @@ Here we are replacing yes and no labels in dataset for the cd column with 0 or 1
 dataset$cd=factor(dataset$cd,levels = c('no','yes'),labels = c(0,1))
 ```
 
-### Convert continuious data to categorical data
+### Convert continuous data to categorical data
 
 ```
 db.adult$hours_w[db.adult$hours_per_week < 40] <- " less_than_40"
@@ -306,6 +306,15 @@ Name <- c("John", "Tim", "Ami")
 Sex <- c("men", "men", "women")
 Age <- c(45, 53, 35)
 dt <- data.frame(Name, Sex, Age)
+dt
+```
+- Output
+
+```
+  Name   Sex Age
+1 John   men  45
+2  Tim   men  53
+3  Ami women  35
 ```
 
 ## Subset datasets
@@ -316,13 +325,12 @@ dt <- data.frame(Name, Sex, Age)
 dt2 <- subset(dt, Age>40&Sex==men)
 dt2
 ```
+- Here, we will get the new subset where Age is greater than 40 and sex is men
 
 ```
 # Other example
 (nrow(subset(db.adult, db.adult$capital_loss == 0))/nrow(db.adult))*100
 ```
-
-- Here, we will get the new subset where Age is greater than 40 and sex is men
 
 Output - 
 
@@ -411,11 +419,11 @@ str(df, vec.len = 2, strict.width = "no", width = 30)
  $ hours-per-week: int  40 13 40 40 40 ...
 ```
 
-- As we can see from the output above, the variables “age”, “fnlwgt”, “education_num”, “capital_gain”, “capital_loss” and “hours_per_week” are of type integer, whereas all the other variables are factor variables with different number of levels. 
+- As we can see from the output above, the variables ```“age”, “fnlwgt”, “education_num”, “capital_gain”, “capital_loss”``` and ``` “hours_per_week” ``` are of type integer, whereas all the other variables are factor variables with different number of levels. 
 
 #### Other method
 
-- You can check the data type of variable by using the is.data_type command: 
+- You can check the data type of variable by using the ```is.data_type``` command: 
 
 Example
 - ``` is.factor ``` checks whether the variable is factor
@@ -444,13 +452,28 @@ levels_factors(df)
 
 
 ## KNN model
-
+TODO
 ## Naive Bayes
+TODO
 
-## Data Transformation
 
 ## Transposing dataframe
 
+Use the t() function to transpose a matrix or a data frame. In the latter case, row names become variable (column) names.
+```
+    df > data[1:10, 1:10]
+```
+```
+    t(df)
+```
+Source: https://www.r-statistics.com/tag/transpose/
+
+
+#### Ensuring that numerical values are not converted to strings
+```
+    data<- as.data.frame(t(data))
+```
+This ensures that the numeric values are not converted to string values.
 
 
 
@@ -462,9 +485,6 @@ levels_factors(df)
 - You can directly use ggplot function which also return a object which can later be modified, or other functions like plot, boxplot etc.
 - ```qplot``` is a shortcut if you're familier with ```plot()```. Ref: https://ggplot2.tidyverse.org/reference/qplot.html
 
-```
-
-```
 
 ### Box Plots
 ```
@@ -495,6 +515,31 @@ ggplot(data = df,
 
 ### Merging Plots
 
+
+### String normalization
+String normalization techniques are aimed at transforming a variety of strings to a smaller set of string values which are more easily processed. By default, R comes with extensive string
+manipulation functionality that is based on the two basic string operations: finding a pattern in a string and replacing one pattern with another. We will deal with R 's generic functions below but start by pointing out some common string cleaning operations. The stringr package 36 offers a number of functions that make some some string manipulation tasks a lot easier than they would be with R 's base functions. For example, extra white spaces at the beginning or end of a string can be removed using str_trim .
+	
+	library(stringr)
+
+	str_trim("  hello world ")
+	## [1] "hello world"
+	str_trim("  hello world ", side = "left")
+	## [1] "hello world "
+	str_trim("  hello world ", side = "right")
+	## [1] "  hello world"
+
+Conversely, strings can be padded with spaces or other characters with ```str_pad``` to a certain width. For example, numerical codes are often represented with prepending zeros. An introduction to data cleaning with R ``` str_pad(112, width = 6, side = "left", pad = 0) ```
+
+	## [1] "000112"
+
+Both str_trim and ```str_pad``` accept a side argument to indicate whether trimming or padding should occur at the beginning ( left ), end ( ) or both sides of the string. Converting strings to complete upper or lower case can be done with R's built-in ```toupper``` and ```tolower``` functions.
+
+	toupper("Hello world")
+	## [1] "HELLO WORLD"
+	
+	tolower("Hello World")
+	## [1] "hello worl
 
 
 
