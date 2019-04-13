@@ -20,13 +20,15 @@
 
 ## Outlier/ missing values removal:
 
+Note: Outliers do not equal errors. They should be detected, but not necessarily
+removed. Their inclusion in the analysis is a statistical decision.
+
 ### Omit all na values:
+
 - This deletes all rows with missing values:
 ```
 df <- na.omit(df)
 ```
-
-
 
 ```
 dataset$X=ifelse(is.na(dataset$X),ave(dataset$X,FUN=function(x) mean(x,na.rm=TRUE)),dataset$X)
@@ -45,7 +47,6 @@ rowMeans(dframe, na.rm=TRUE)
 ```
 dframe[dframe < 0] <- NA
 ```
-
 
 To consider only non-NaN values, you can subset for not NaN using ```!is.nan```, see this example:
 
@@ -72,6 +73,19 @@ Or you can replace NaN values with some desired value by setting ``` mea[is.nan(
 ```
 df$data_col[df$data_col == '?'] <- '0' 
 ```
+```
+marx_m <- marx
+I <- marx$unit == "cm"
+marx_m[I, "height"] <- marx$height[I]/100
+I <- marx$unit == "inch"
+marx_m[I, "inch"] <- marx$height[I]/39.37
+I <- marx$unit == "ft"
+marx_m[I, "ft"] <- marx$height[I]/3.28
+marx_m$unit <- "m"
+```
+
+### C
+
 
 
 ## Handle categorical data:
@@ -448,11 +462,30 @@ levels_factors(df)
 ```
 
 
+### Getting the Mean
 
+```
+age <- c(23, 16, NA)
+mean(age)
+## [1] NA
+```
+
+Removing na values and try again
+```
+mean(age, na.rm = TRUE)
+## [1] 19.5
+```
 
 
 ## KNN model
-TODO
+- Since the initial cluster assignments are random, let us set the seed to ensure reproducibility.
+```
+set.seed(20)
+irisCluster <- kmeans(iris[, 3:4], 3, nstart = 20)
+irisCluster
+K-means clustering with 3 clusters of sizes 46, 54, 
+```
+
 ## Naive Bayes
 TODO
 
@@ -486,11 +519,84 @@ This ensures that the numeric values are not converted to string values.
 - ```qplot``` is a shortcut if you're familier with ```plot()```. Ref: https://ggplot2.tidyverse.org/reference/qplot.html
 
 
+### Quick plot
+Source: R/quick-plot.r
+
+qplot is a shortcut designed to be familiar if you're used to base plot(). It's a convenient wrapper for creating a number of different types of plots using a consistent calling scheme. It's great for allowing you to produce plots quickly, but I highly recommend learning ggplot() as it makes it easier to create complex graphics.
+```
+qplot(x, y, ..., data, facets = NULL, margins = FALSE, geom = "auto",
+  xlim = c(NA, NA), ylim = c(NA, NA), log = "", main = NULL,
+  xlab = NULL, ylab = NULL, asp = NA, stat = NULL,
+  position = NULL)
+```
+```
+quickplot(x, y, ..., data, facets = NULL, margins = FALSE,
+  geom = "auto", xlim = c(NA, NA), ylim = c(NA, NA), log = "",
+  main = NULL, xlab = NULL, ylab = NULL, asp = NA, stat = NULL,
+  position = NULL)
+```
+
+### Plot Function
+
+Generic X-Y Plotting
+Description
+
+Generic function for plotting of R objects. For more details about the graphical parameter arguments, see par.
+
+For simple scatter plots, plot.default will be used. However, there are plot methods for many R objects, including functions, data.frames, density objects, etc. Use methods(plot) and the documentation for these.
+Usage
+
+	plot(x, y, ...)
+```
+Arguments
+x 	 the x coordinates of points in the plot. Alternatively, a single plotting structure, function or any R object with a plot method can be provided.
+y 	 the y coordinates of points in the plot, optional if x is an appropriate structure.
+...  Arguments to be passed to methods, such as graphical parameters (see par). Many methods will accept the following arguments:
+
+
+
+what type of plot should be drawn. Possible types are
+
+"p" for points,
+
+"l" for lines,
+
+"b" for both,
+
+"c" for the lines part alone of "b",
+
+"o" for both ‘overplotted’,
+
+"h" for ‘histogram’ like (or ‘high-density’) vertical lines,
+
+"s" for stair steps,
+
+"S" for other steps, see ‘Details’ below,
+
+"n" for no plotting.
+
+main: an overall title for the plot: see title.
+sub: a sub title for the plot: see title.
+xlab: a title for the x axis: see title.
+ylab: a title for the y axis: see title.
+asp: the y/x aspect ratio, see plot.window.
+```
+
 ### Box Plots
 ```
 ggplot(aes(x = factor(0), y = hours_per_week),
        data = db.adult) + 
-  geom_boxplot()
+  geom_boxplot() +
+  stat_summary(fun.y = mean, 
+               geom = 'point', 
+               shape = 19,
+               color = "red",
+               cex = 2) +
+  scale_x_discrete(breaks = NULL) +
+  scale_y_continuous(breaks = seq(0, 100, 5)) + 
+  xlab(label = "") +
+  ylab(label = "Working hours per week") +
+  ggtitle("Box Plot of Working Hours per Week") 
 ```
 
 ### Histograms
@@ -505,6 +611,16 @@ ggplot(data = df,
   labs(x = "Capital gain", y = "Count") +
   ggtitle("Histogram of Nonzero Capital Gain") 
 ```
+- Varying alpha is useful for large datasets
+```
+d <- ggplot(diamonds, aes(carat, price))
+d + geom_point(alpha = 1/10)
+```
+
+- For shapes that have a border (like 21), you can colour the inside and outside separately. Use the stroke aesthetic to modify the width of the border
+```
+	ggplot(mtcars, aes(wt, mpg)) + geom_point(shape = 21, colour = "black",  fill = "white", size = 5, stroke = 5)
+```
 
 ### Dot Plots
 
@@ -517,8 +633,12 @@ ggplot(data = df,
 
 
 ### String normalization
-String normalization techniques are aimed at transforming a variety of strings to a smaller set of string values which are more easily processed. By default, R comes with extensive string
-manipulation functionality that is based on the two basic string operations: finding a pattern in a string and replacing one pattern with another. We will deal with R 's generic functions below but start by pointing out some common string cleaning operations. The stringr package 36 offers a number of functions that make some some string manipulation tasks a lot easier than they would be with R 's base functions. For example, extra white spaces at the beginning or end of a string can be removed using str_trim .
+
+- String normalization techniques are aimed at transforming a variety of strings to a smaller set of string values which are more easily processed. By default, R comes with extensive string
+manipulation functionality that is based on the two basic string operations: 
+- finding a pattern in a string and replacing one pattern with another. We will deal with R 's generic functions below but start by pointing out some common string cleaning operations. 
+- The stringr package 36 offers a number of functions that make some some string manipulation tasks a lot easier than they would be with R 's base functions. 
+- For example, extra white spaces at the beginning or end of a string can be removed using str_trim.
 	
 	library(stringr)
 
