@@ -640,6 +640,8 @@ manipulation functionality that is based on the two basic string operations:
 ```
 	library(stringr)
 ```
+
+```
 	str_trim("  hello world ")
 	## [1] "hello world"
 	str_trim("  hello world ", side = "left")
