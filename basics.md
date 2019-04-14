@@ -4,7 +4,7 @@
 
 - R seems to work like a procedural language, but it is interally a Object Oriented Language.
 
-- The assignment operator ``` <- ``` is just a fancy way for writing ``` = ```, both can be used interchangeably.
+- The assignment operator ``` <- ``` is just a fancy way for writing ``` = ``` , both can be used interchangeably.
 
 - If the dataset contains very high number of values, consider to use a subset of these values for exploratory analysis and later take the entire set.
 
@@ -83,9 +83,6 @@ I <- marx$unit == "ft"
 marx_m[I, "ft"] <- marx$height[I]/3.28
 marx_m$unit <- "m"
 ```
-
-### C
-
 
 
 ## Handle categorical data:
@@ -583,6 +580,7 @@ asp: the y/x aspect ratio, see plot.window.
 ```
 
 ### Box Plots
+
 ```
 ggplot(aes(x = factor(0), y = hours_per_week),
        data = db.adult) + 
@@ -639,28 +637,27 @@ manipulation functionality that is based on the two basic string operations:
 - finding a pattern in a string and replacing one pattern with another. We will deal with R 's generic functions below but start by pointing out some common string cleaning operations. 
 - The stringr package 36 offers a number of functions that make some some string manipulation tasks a lot easier than they would be with R 's base functions. 
 - For example, extra white spaces at the beginning or end of a string can be removed using str_trim.
-	
+```
 	library(stringr)
-
+```
 	str_trim("  hello world ")
 	## [1] "hello world"
 	str_trim("  hello world ", side = "left")
 	## [1] "hello world "
 	str_trim("  hello world ", side = "right")
 	## [1] "  hello world"
-
+```
 Conversely, strings can be padded with spaces or other characters with ```str_pad``` to a certain width. For example, numerical codes are often represented with prepending zeros. An introduction to data cleaning with R ``` str_pad(112, width = 6, side = "left", pad = 0) ```
-
-	## [1] "000112"
-
+```
+## [1] "000112"
+```
 Both str_trim and ```str_pad``` accept a side argument to indicate whether trimming or padding should occur at the beginning ( left ), end ( ) or both sides of the string. Converting strings to complete upper or lower case can be done with R's built-in ```toupper``` and ```tolower``` functions.
-
-	toupper("Hello world")
-	## [1] "HELLO WORLD"
-	
-	tolower("Hello World")
-	## [1] "hello worl
-
+```
+toupper("Hello world")
+## [1] "HELLO WORLD"
+tolower("Hello World")
+## [1] "hello world
+```
 
 
 Disclamer: The content provided here is not entirely mine and is gathered from various sources
